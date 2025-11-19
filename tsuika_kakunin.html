@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>追加工事確認書アプリ</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      color-scheme: light;
+    }
+    body {
+      margin: 0;
+      background: #f5f5f5;
+    }
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #0f766e;
+      color: #fff;
+      padding: 0.8rem 1rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    header p {
+      margin: 0.2rem 0 0;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    main {
+      padding: 0.8rem;
+      flex: 1;
+    }
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+    }
+    .card {
+      background: #fff;
+      border-radius: 0.6rem;
+      padding: 0.8rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 0.8rem;
+    }
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+    button, .btn-link {
+      border: none;
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #0f766e;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    button.secondary, .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.danger {
+      background: #b91c1c;
+    }
+    button:active, .btn-link:active {
+      transform: scale(0.98);
+    }
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .list-header h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+      text-align: left;
+      background: #f9fafb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr {
+      cursor: pointer;
+    }
+    tr:hover {
+      background: #f1f5f9;
+    }
+    .empty {
+      font-size: 0.85rem;
+      color: #6b7280;
+      padding: 0.6rem 0;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
+    }
+    label {
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.45rem 0.5rem;
+      border-radius: 0.4rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .note {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+    .confirm-wrapper {
+      background: #fff;
+      padding: 0.8rem;
+      border-radius: 0.6rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .confirm-title {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .confirm-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin-bottom: 0.6rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .confirm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 0.6rem;
+    }
+    .confirm-table th,
+    .confirm-table td {
+      border: 1px solid #9ca3af;
+      padding: 0.4rem;
+      vertical-align: top;
+    }
+    @media (max-width: 600px) {
+      th:nth-child(4),
+      td:nth-child(4) {
+        display: none;
+      }
+    }
+    @media print {
+      header, .no-print {
+        display: none !important;
+      }
+      body {
+        background: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="no-print">
+      <h1>追加工事確認書</h1>
+      <p>現場でサッと作成できる簡易アプリ</p>
+    </header>
+    <main>
+
+      <!-- 一覧画面 -->
+      <section id="view-list" class="view active">
+        <!-- 受注者名設定カード -->
+        <div class="card">
+          <h2 style="margin-top:0;font-size:0.95rem;">受注者情報</h2>
+          <div class="form-grid">
+            <div>
+              <label for="contractorName">受注者名（会社名・担当者名など）</label>
+              <input type="text" id="contractorName" placeholder="例）〇〇工務店　山田" />
+              <div class="note">※ここで登録した受注者名が、すべての確認書に表示されます。</div>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:0.6rem;">
+            <button type="button" id="btn-save-contractor">受注者名を保存</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="list-header">
+            <h2>追加工事一覧</h2>
+            <button id="btn-new" type="button" onclick="openNewForm()">新規作成</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>現場名</th>
+                <th>発注者</th>
+                <th>金額</th>
+                <th>作成日</th>
+              </tr>
+            </thead>
+            <tbody id="list-body"></tbody>
+          </table>
+          <div id="list-empty" class="empty" style="display:none;">
+            データがありません。新規作成してください。
+          </div>
+        </div>
+      </section>
+
+      <!-- 入力フォーム画面 -->
+      <section id="view-form" class="view">
+        <div class="card">
+          <div class="btn-row no-print">
+            <button class="secondary" type="button" onclick="switchView('view-list')">← 一覧へ戻る</button>
+          </div>
+
+          <h2>追加工事入力</h2>
+          <form id="item-form">
+            <div class="form-grid">
+              <div>
+                <label>現場名</label>
+                <input type="text" id="siteName" required />
+              </div>
+              <div>
+                <label>発注者</label>
+                <input type="text" id="customerName" required />
+              </div>
+              <div>
+                <label>追加工事内容</label>
+                <textarea id="workContent" required></textarea>
+              </div>
+              <div class="field-row">
+                <div>
+                  <label>金額（税込）</label>
+                  <input type="number" id="amount" required />
+                </div>
+                <div>
+                  <label>工事日</label>
+                  <input type="date" id="workDate" />
+                </div>
+              </div>
+
+              <!-- 支払条件：セレクト＋自由入力 -->
+              <div>
+                <label>支払条件</label>
+                <select id="paymentPreset">
+                  <option value="本体契約の支払い条件に従う">本体契約の支払い条件に従う</option>
+                  <option value="工事完了後支払い">工事完了後支払い</option>
+                  <option value="custom">自由入力（下欄に記載）</option>
+                </select>
+                <input
+                  type="text"
+                  id="paymentTerms"
+                  placeholder="支払条件を入力してください"
+                  style="margin-top:0.3rem;"
+                />
+                <div class="note">
+                  ※上のリストから選ぶと、この欄に自動入力されます。自由に書き換えもできます。<br>
+                  ※新規作成時は「本体契約の支払い条件に従う」が自動入力されます。
+                </div>
+              </div>
+
+              <div>
+                <label>作成日</label>
+                <input type="date" id="createdDate" />
+              </div>
+              <div>
+                <label>備考</label>
+                <input type="text" id="note" />
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:1rem;">
+              <button type="submit">保存して確認書へ</button>
+              <button type="button" class="secondary" onclick="resetForm()">クリア</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 詳細画面（確認書） -->
+      <section id="view-detail" class="view">
+        <div class="card no-print">
+          <div class="btn-row">
+            <button class="secondary" type="button" onclick="switchView('view-list')">← 一覧へ戻る</button>
+            <button id="btn-edit-current" type="button">修正</button>
+            <button id="btn-delete-current" type="button" class="danger">削除</button>
+          </div>
+
+          <div class="btn-row">
+            <button id="btn-copy" type="button">コピー</button>
+            <button id="btn-mail" type="button">メール</button>
+            <button id="btn-print" type="button">印刷／PDF</button>
+          </div>
+        </div>
+
+        <div class="confirm-wrapper">
+          <div class="confirm-title">追加工事確認書</div>
+
+          <div class="confirm-meta">
+            <div>作成日：<span id="d-createdDate"></span></div>
+            <div>工事日：<span id="d-workDate"></span></div>
+          </div>
+
+          <table class="confirm-table">
+            <tr>
+              <th>現場名</th>
+              <td id="d-siteName"></td>
+            </tr>
+            <tr>
+              <th>発注者</th>
+              <td id="d-customerName"></td>
+            </tr>
+            <tr>
+              <th>受注者</th>
+              <td id="d-contractorName"></td>
+            </tr>
+            <tr>
+              <th>追加工事内容</th>
+              <td id="d-workContent"></td>
+            </tr>
+            <tr>
+              <th>金額（税込）</th>
+              <td id="d-amount"></td>
+            </tr>
+            <tr>
+              <th>支払条件</th>
+              <td id="d-paymentTerms"></td>
+            </tr>
+            <tr>
+              <th>備考</th>
+              <td id="d-note"></td>
+            </tr>
+          </table>
+
+          <p>上記内容で追加工事を発注・受注いたします。</p>
+          <br />
+          <p>発注者（署名）：　　　　　　　　　　　　　　　　印</p>
+          <p>受注者（署名）：　　　　　　　　　　　　　　　　印</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "tsuika_app_v2";
+    const CONTRACTOR_KEY = "tsuika_app_contractor";
+    const DEFAULT_PAYMENT = "本体契約の支払い条件に従う";
+
+    let state = {
+      items: [],
+      editingId: null,
+      currentId: null,
+    };
+
+    // 表示切替
+    function switchView(id) {
+      document.querySelectorAll(".view").forEach(v => {
+        v.classList.remove("active");
+      });
+      document.getElementById(id).classList.add("active");
+    }
+
+    // データロード/保存
+    function loadItems() {
+      state.items = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+    }
+
+    function loadContractorName() {
+      return localStorage.getItem(CONTRACTOR_KEY) || "";
+    }
+    function saveContractorName(name) {
+      localStorage.setItem(CONTRACTOR_KEY, name || "");
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    // 新規作成（ボタンから直接呼ぶ）
+    function openNewForm() {
+      resetForm();
+      state.editingId = null;
+      switchView("view-form");
+    }
+
+    // フォーム初期化
+    function resetForm() {
+      const form = document.getElementById("item-form");
+      if (form) form.reset();
+
+      const today = new Date().toISOString().slice(0,10);
+      const createdDateInput = document.getElementById("createdDate");
+      if (createdDateInput) createdDateInput.value = today;
+
+      const preset = document.getElementById("paymentPreset");
+      const paymentInput = document.getElementById("paymentTerms");
+      if (preset && paymentInput) {
+        preset.value = DEFAULT_PAYMENT;
+        paymentInput.value = DEFAULT_PAYMENT;
+      }
+    }
+
+    // 一覧描画
+    function renderList() {
+      const body = document.getElementById("list-body");
+      body.innerHTML = "";
+
+      if (state.items.length === 0) {
+        document.getElementById("list-empty").style.display = "block";
+        return;
+      }
+      document.getElementById("list-empty").style.display = "none";
+
+      const sorted = [...state.items].sort((a,b)=>b.createdAt - a.createdAt);
+      sorted.forEach(item=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.siteName}</td>
+          <td>${item.customerName}</td>
+          <td>${Number(item.amount).toLocaleString()}円</td>
+          <td>${item.createdDate}</td>
+        `;
+        tr.onclick = () => openDetail(item.id);
+        body.appendChild(tr);
+      });
+    }
+
+    // 詳細画面表示
+    function openDetail(id) {
+      const item = state.items.find(i=>i.id===id);
+      if (!item) return;
+
+      state.currentId = id;
+
+      const contractorName = loadContractorName() || "（受注者名未登録）";
+
+      document.getElementById("d-siteName").textContent = item.siteName;
+      document.getElementById("d-customerName").textContent = item.customerName;
+      document.getElementById("d-contractorName").textContent = contractorName;
+      document.getElementById("d-workContent").textContent = item.workContent;
+      document.getElementById("d-amount").textContent = Number(item.amount).toLocaleString() + "円";
+      document.getElementById("d-paymentTerms").textContent = item.paymentTerms;
+      document.getElementById("d-note").textContent = item.note;
+      document.getElementById("d-workDate").textContent = item.workDate;
+      document.getElementById("d-createdDate").textContent = item.createdDate;
+
+      switchView("view-detail");
+    }
+
+    // シェア用文面
+    function buildShareText(item) {
+      const contractorName = loadContractorName() || "";
+      return [
+        "【追加工事確認書】",
+        "",
+        "記載内容をご確認いただき、内容に相違なければ、そのままご返信（ご承諾の意思表示）をお願いいたします。これにより、本確認書は正式に取り交わされたものとして効力を発するものとします。",
+        "",
+        `現場名：${item.siteName}`,
+        `発注者：${item.customerName}`,
+        `受注者：${contractorName || "（未登録）"}`,
+        `工事日：${item.workDate || "未定"}`,
+        "",
+        "＜追加工事内容＞",
+        item.workContent,
+        "",
+        `金額（税込）：${Number(item.amount).toLocaleString()}円`,
+        `支払条件　　：${item.paymentTerms}`,
+        "",
+        `備考　　　　：${item.note}`,
+        "",
+        "上記内容で追加工事を発注・受注いたします。"
+      ].join("\n");
+    }
+
+    // イベント登録
+    document.addEventListener("DOMContentLoaded", () => {
+      loadItems();
+      renderList();
+      resetForm();
+
+      // 受注者名 初期表示
+      const contractorInput = document.getElementById("contractorName");
+      contractorInput.value = loadContractorName();
+
+      // 受注者名保存
+      document.getElementById("btn-save-contractor").onclick = () => {
+        const name = contractorInput.value.trim();
+        saveContractorName(name);
+        alert("受注者名を保存しました。今後の確認書に反映されます。");
+      };
+
+      // 支払条件プリセット変更時
+      const preset = document.getElementById("paymentPreset");
+      const paymentInput = document.getElementById("paymentTerms");
+      if (preset && paymentInput) {
+        preset.addEventListener("change", () => {
+          const val = preset.value;
+          if (val === "custom") {
+            paymentInput.value = "";
+            paymentInput.focus();
+          } else {
+            paymentInput.value = val;
+          }
+        });
+      }
+
+      // 保存
+      document.getElementById("item-form").addEventListener("submit", (e)=>{
+        e.preventDefault();
+
+        const item = {
+          id: state.editingId || generateId(),
+          siteName: siteName.value.trim(),
+          customerName: customerName.value.trim(),
+          workContent: workContent.value.trim(),
+          amount: amount.value,
+          workDate: workDate.value,
+          paymentTerms: (paymentTerms.value.trim() || DEFAULT_PAYMENT),
+          createdDate: createdDate.value,
+          note: note.value.trim(),
+          createdAt: Date.now(),
+        };
+
+        if (!item.siteName || !item.customerName || !item.workContent || !item.amount) {
+          alert("現場名・発注者・追加工事内容・金額は必須です。");
+          return;
+        }
+
+        if (state.editingId) {
+          const idx = state.items.findIndex(i=>i.id===state.editingId);
+          state.items[idx] = item;
+          state.editingId = null;
+        } else {
+          state.items.push(item);
+        }
+
+        saveItems();
+        renderList();
+        openDetail(item.id);
+      });
+
+      // 修正
+      document.getElementById("btn-edit-current").onclick = ()=>{
+        const item = state.items.find(i=>i.id===state.currentId);
+        if (!item) return;
+
+        state.editingId = item.id;
+        siteName.value = item.siteName;
+        customerName.value = item.customerName;
+        workContent.value = item.workContent;
+        amount.value = item.amount;
+        workDate.value = item.workDate;
+        paymentTerms.value = item.paymentTerms || DEFAULT_PAYMENT;
+
+        // プリセットを既知の文言に合わせる
+        const presetSelect = document.getElementById("paymentPreset");
+        if (presetSelect) {
+          if (item.paymentTerms === "本体契約の支払い条件に従う") {
+            presetSelect.value = "本体契約の支払い条件に従う";
+          } else if (item.paymentTerms === "工事完了後支払い") {
+            presetSelect.value = "工事完了後支払い";
+          } else {
+            presetSelect.value = "custom";
+          }
+        }
+
+        createdDate.value = item.createdDate;
+        note.value = item.note;
+
+        switchView("view-form");
+      };
+
+      // 削除
+      document.getElementById("btn-delete-current").onclick = ()=>{
+        if (!confirm("削除しますか？")) return;
+        state.items = state.items.filter(i=>i.id!==state.currentId);
+        saveItems();
+        renderList();
+        switchView("view-list");
+      };
+
+      // コピー
+      document.getElementById("btn-copy").onclick = async ()=>{
+        const item = state.items.find(i=>i.id===state.currentId);
+        if (!item) return;
+        try {
+          await navigator.clipboard.writeText(buildShareText(item));
+          alert("コピーしました。LINEなどに貼り付けてください。");
+        } catch {
+          alert("コピーに失敗しました。手動で選択・コピーしてください。");
+        }
+      };
+
+      // メール
+      document.getElementById("btn-mail").onclick = ()=>{
+        const item = state.items.find(i=>i.id===state.currentId);
+        if (!item) return;
+        const subject = "追加工事確認書";
+        const body = buildShareText(item);
+        location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      };
+
+      // 印刷
+      document.getElementById("btn-print").onclick = ()=>{
+        window.print();
+      };
+    });
+  </script>
+</body>
+</html>
